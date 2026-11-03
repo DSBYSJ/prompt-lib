@@ -13,12 +13,12 @@ sprint:
   base: main
 
 development_status:
-  epic-1: in-progress
+  epic-1: done
 
-  story-1-1-skeleton-search: ready-for-dev
-  story-1-2-detail-copy: backlog
-  story-1-3-favorites-custom: backlog
-  story-1-4-polish-responsive: backlog
+  story-1-1-skeleton-search: done
+  story-1-2-detail-copy: done
+  story-1-3-favorites-custom: done
+  story-1-4-polish-responsive: done
 
   epic-1-retrospective: optional
 
