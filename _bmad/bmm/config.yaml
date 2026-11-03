@@ -1,0 +1,62 @@
+# BMad Method · 项目级配置（BMM 模块）
+
+# 约定产物落在哪、用什么语言写。各阶段的工作流按这里找落点，
+# 产物位置因此稳定、可被 git 逐条核验，而不是散在聊天窗口里。
+
+communication_language: 中文
+document_output_language: 中文
+
+output_folder: _bmad-output
+
+artifact_paths:
+  planning: _bmad-output/planning-artifacts
+  specs: _bmad-output/specs
+  implementation: _bmad-output/implementation-artifacts
+  test: _bmad-output/test-artifacts
+
+# 阶段 → 工作流 → 产物 → 提交。核验时按这张表逐行打开即可。
+phases:
+  - id: analysis
+    workflow: bmad-product-brief
+    agent: analyst
+    artifact: planning-artifacts/brief-prompt-lib.md
+
+  - id: planning
+    workflow: bmad-prd
+    agent: pm
+    artifact: planning-artifacts/prd-prompt-lib.md
+
+  - id: solutioning
+    workflow: bmad-architecture
+    agent: architect
+    artifact: planning-artifacts/architecture-prompt-lib.md
+
+  - id: spec
+    workflow: bmad-spec
+    agent: pm
+    artifact: specs/spec-1-browse-copy/SPEC.md
+
+  - id: breakdown
+    workflow: bmad-create-epics-and-stories
+    agent: pm
+    artifact: planning-artifacts/epics.md
+
+  - id: sprint
+    workflow: bmad-sprint-planning
+    agent: sm
+    artifact: implementation-artifacts/sprint-status.yaml
+
+  - id: build
+    workflow: bmad-build
+    agent: dev
+    artifact: 代码提交（src/、样式、数据）
+
+  - id: review
+    workflow: bmad-code-review
+    agent: dev
+    artifact: test-artifacts/code-review-1.md
+
+  - id: verify
+    workflow: bmad-walkthrough
+    agent: dev
+    artifact: test-artifacts/verification-report.md
