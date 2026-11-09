@@ -1114,3 +1114,123 @@ body {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ============================================================
+   Epic 2 · 变量填写
+   已填用实心渐变、未填用虚线描边 —— 两者必须在余光里就能分辨，
+   否则填到一半分不清哪个还没填。
+   ============================================================ */
+
+.fill {
+  margin-bottom: 14px;
+  padding: 12px 13px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.fill__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 9px;
+}
+
+.fill__count {
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+.fill__count--ok {
+  color: var(--accent-1);
+}
+
+.fill__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 9px;
+  /* 变量多时只让表单滚，预览必须一直看得见 */
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.fill__label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11.5px;
+  color: var(--ink-2);
+}
+
+.fill__field input {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.16s, box-shadow 0.16s;
+}
+
+.fill__field input:focus {
+  border-color: rgba(94, 234, 212, 0.45);
+  box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.1);
+}
+
+/* 已填：实心（沿用 .var 的渐变底） */
+.var--filled {
+  /* 无额外样式，靠 .var 的渐变底 + 深色字 */
+}
+
+/* 未填：虚线描边 + 青色字，不能与"已填"混淆 */
+.var--empty {
+  color: var(--accent-1);
+  font-weight: 500;
+  background: transparent;
+  border: 1px dashed rgba(94, 234, 212, 0.5);
+}
+
+/* 底部改成上下两层：主按钮独占一行，次要操作排在下面 */
+.drawer__foot {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.drawer__footMain {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.drawer__footSide {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.drawer__miss {
+  margin: 0;
+  font-size: 11.5px;
+  color: #fcd34d;
+  text-align: center;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+/* 覆盖 Epic 1 里给 flex 行布局写的 flex:1，否则纵向布局会被拉高 */
+.drawer__foot .btn--primary,
+.drawer__foot .btn--ok {
+  flex: none;
+}
+
+@media (max-width: 768px) {
+  .fill__grid {
+    grid-template-columns: 1fr;
+    max-height: 34vh;
+  }
+}

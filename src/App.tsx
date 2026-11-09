@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Composer from './components/Composer'
-import Drawer from './components/Drawer'
+import Drawer, { type CopyKind } from './components/Drawer'
 import PromptCard from './components/PromptCard'
 import Sidebar from './components/Sidebar'
 import Toast, { type ToastMessage } from './components/Toast'
@@ -52,7 +52,7 @@ export default function App() {
   const [openId, setOpenId] = useState<string | null>(null)
   const [composerOpen, setComposerOpen] = useState(false)
   const [toast, setToast] = useState<ToastMessage | null>(null)
-  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   // 首次挂载读本地数据；存储不可用（隐私模式）时给出一次提示
@@ -88,15 +88,21 @@ export default function App() {
   }, [])
 
   const copy = useCallback(
-    async (p: Prompt) => {
-      const ok = await writeClipboard(p.body)
+    async (text: string, kind: CopyKind | 'card', missing = 0) => {
+      const ok = await writeClipboard(text)
       if (!ok) {
         say('复制失败，请打开详情手动选中复制', 'warn')
         return
       }
-      setCopiedId(p.id)
-      window.setTimeout(() => setCopiedId(null), 1500)
-      say('已复制到剪贴板')
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1500)
+      if (kind === 'filled') {
+        say(missing > 0 ? `已复制，还有 ${missing} 处变量没填` : '已复制成品', missing > 0 ? 'warn' : 'ok')
+      } else if (kind === 'card') {
+        say('已复制模板 · 打开详情可填变量')
+      } else {
+        say('已复制模板')
+      }
     },
     [say],
   )
@@ -288,7 +294,7 @@ export default function App() {
                   fav={favSet.has(p.id)}
                   index={i}
                   onOpen={() => setOpenId(p.id)}
-                  onCopy={() => void copy(p)}
+                  onCopy={() => void copy(p.body, 'card')}
                   onToggleFav={() => toggleFav(p.id)}
                 />
               ))}
@@ -315,11 +321,12 @@ export default function App() {
       </footer>
 
       <Drawer
+        key={open?.id ?? 'none'}
         prompt={open}
         fav={open ? favSet.has(open.id) : false}
-        copied={open ? copiedId === open.id : false}
+        copied={copied}
         onClose={() => setOpenId(null)}
-        onCopy={() => open && void copy(open)}
+        onCopy={(text, kind, missing) => void copy(text, kind, missing)}
         onToggleFav={() => open && toggleFav(open.id)}
         onDelete={open && !open.builtin ? () => removeCustom(open.id) : undefined}
       />

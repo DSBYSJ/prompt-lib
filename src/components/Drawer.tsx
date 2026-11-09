@@ -1,36 +1,26 @@
-import { Fragment, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Prompt } from '../types'
 import { CATEGORY_LABEL } from '../types'
-import { extractVars } from '../lib/search'
+import { extractVars, findMissing, renderTemplate, splitTemplate } from '../lib/template'
+
+export type CopyKind = 'filled' | 'template'
 
 interface Props {
   prompt: Prompt | null
   fav: boolean
   copied: boolean
   onClose: () => void
-  onCopy: () => void
+  /** 把"复制什么"交给调用方：Drawer 只负责产出文本，剪贴板与提示是 App 的事 */
+  onCopy: (text: string, kind: CopyKind, missing: number) => void
   onToggleFav: () => void
   /** 仅自建提示词可删；内置的不传，就不渲染删除按钮 */
   onDelete?: () => void
 }
 
-/** 把 {{变量}} 切出来单独高亮 —— 正则在 storage 层已有一份，这里只做渲染切分 */
-function renderBody(body: string) {
-  const parts = body.split(/(\{\{\s*[^{}]+?\s*\}\})/g)
-  return parts.map((part, i) => {
-    const m = /^\{\{\s*([^{}]+?)\s*\}\}$/.exec(part)
-    if (m) {
-      return (
-        <span key={i} className="var">
-          {m[1].trim()}
-        </span>
-      )
-    }
-    return <Fragment key={i}>{part}</Fragment>
-  })
-}
-
 export default function Drawer({ prompt, fav, copied, onClose, onCopy, onToggleFav, onDelete }: Props) {
+  // 填值只活在抽屉里。App 传 key={prompt.id}，换条目时组件重建 → 天然清空，不需要手写 reset。
+  const [values, setValues] = useState<Record<string, string>>({})
+
   useEffect(() => {
     if (!prompt) return
     const onKey = (e: KeyboardEvent) => {
@@ -40,8 +30,13 @@ export default function Drawer({ prompt, fav, copied, onClose, onCopy, onToggleF
     return () => window.removeEventListener('keydown', onKey)
   }, [prompt, onClose])
 
+  const body = prompt?.body ?? ''
+  const vars = useMemo(() => extractVars(body), [body])
+  const missing = useMemo(() => findMissing(body, values), [body, values])
+  const segments = useMemo(() => splitTemplate(body), [body])
+  const filledCount = vars.length - missing.length
+
   if (!prompt) return null
-  const vars = extractVars(prompt.body)
 
   return (
     <div className="drawer" role="dialog" aria-modal="true" aria-label={prompt.title}>
@@ -63,20 +58,48 @@ export default function Drawer({ prompt, fav, copied, onClose, onCopy, onToggleF
         </header>
 
         <div className="drawer__body">
-          <pre className="promptbody">{renderBody(prompt.body)}</pre>
-
           {vars.length > 0 && (
-            <section className="drawer__vars">
-              <h3>需要替换的变量（{vars.length}）</h3>
-              <ul>
-                {vars.map((v) => (
-                  <li key={v}>
-                    <code>{`{{${v}}}`}</code>
-                  </li>
+            <section className="fill">
+              <div className="fill__head">
+                <span className={`fill__count ${missing.length === 0 ? 'fill__count--ok' : ''}`}>
+                  共 {vars.length} 个变量 · 已填 {filledCount} 个
+                </span>
+                {filledCount > 0 && (
+                  <button type="button" className="linkbtn" onClick={() => setValues({})}>
+                    清空
+                  </button>
+                )}
+              </div>
+
+              <div className="fill__grid">
+                {vars.map((name) => (
+                  <label key={name} className="fill__field">
+                    <span className="fill__label">{name}</span>
+                    <input
+                      value={values[name] ?? ''}
+                      onChange={(e) => setValues((prev) => ({ ...prev, [name]: e.target.value }))}
+                      placeholder={`填写${name}`}
+                      aria-label={`变量 ${name}`}
+                    />
+                  </label>
                 ))}
-              </ul>
+              </div>
             </section>
           )}
+
+          <pre className="promptbody">
+            {segments.map((seg, i) =>
+              seg.type === 'text' ? (
+                <span key={i}>{seg.value}</span>
+              ) : (values[seg.value] ?? '').trim() ? (
+                <span key={i} className="var var--filled">
+                  {values[seg.value]}
+                </span>
+              ) : (
+                <span key={i} className="var var--empty">{`{{${seg.value}}}`}</span>
+              ),
+            )}
+          </pre>
 
           {prompt.note && <p className="drawer__note">注意：{prompt.note}</p>}
 
@@ -90,17 +113,41 @@ export default function Drawer({ prompt, fav, copied, onClose, onCopy, onToggleF
         </div>
 
         <footer className="drawer__foot">
-          <button type="button" className={`btn ${copied ? 'btn--ok' : 'btn--primary'}`} onClick={onCopy}>
-            {copied ? '已复制 ✓' : '复制全文'}
-          </button>
-          <button type="button" className={`btn btn--ghost ${fav ? 'btn--fav' : ''}`} onClick={onToggleFav}>
-            {fav ? '已收藏' : '收藏'}
-          </button>
-          {onDelete && (
-            <button type="button" className="btn btn--danger" onClick={onDelete}>
-              删除
+          <div className="drawer__footMain">
+            {missing.length > 0 && (
+              <p className="drawer__miss">
+                还有 {missing.length} 处没填，复制后保留 {'{{变量}}'}
+              </p>
+            )}
+            <button
+              type="button"
+              className={`btn ${copied ? 'btn--ok' : 'btn--primary'} btn--block`}
+              onClick={() => onCopy(renderTemplate(body, values), 'filled', missing.length)}
+            >
+              {copied ? '已复制 ✓' : '复制成品'}
             </button>
-          )}
+          </div>
+          <div className="drawer__footSide">
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              onClick={() => onCopy(body, 'template', missing.length)}
+            >
+              复制模板
+            </button>
+            <button
+              type="button"
+              className={`btn btn--ghost btn--sm ${fav ? 'btn--fav' : ''}`}
+              onClick={onToggleFav}
+            >
+              {fav ? '已收藏' : '收藏'}
+            </button>
+            {onDelete && (
+              <button type="button" className="btn btn--danger btn--sm" onClick={onDelete}>
+                删除
+              </button>
+            )}
+          </div>
         </footer>
       </div>
     </div>
