@@ -1,26 +1,16 @@
 import type { Category, Prompt, ViewKey } from '../types'
+import { extractVars } from './template'
 
 /**
  * 筛选与检索的纯逻辑层。
  *
  * 刻意不 import React：这层是"会出错且出错难发现"的地方
  * （筛选条件组合、子串匹配的边界），必须能脱离 UI 单测。
+ *
+ * 变量语法不在这里实现 —— 见 `template.ts`（唯一真相）。此处只再导出，
+ * 保持 Epic 1 的对外 API 不变，避免动到既有 32 条单测。
  */
-
-const VAR_RE = /\{\{\s*([^{}]+?)\s*\}\}/g
-
-/** 从正文里抽取 {{变量}}，去重且保持首次出现顺序 */
-export function extractVars(body: string): string[] {
-  const out: string[] = []
-  const seen = new Set<string>()
-  for (const m of body.matchAll(VAR_RE)) {
-    const name = m[1].trim()
-    if (!name || seen.has(name)) continue
-    seen.add(name)
-    out.push(name)
-  }
-  return out
-}
+export { extractVars }
 
 /** 单条是否命中关键词：标题 / 用途 / 正文 / 标签 / 别名，大小写不敏感 */
 export function matchPrompt(p: Prompt, q: string): boolean {
