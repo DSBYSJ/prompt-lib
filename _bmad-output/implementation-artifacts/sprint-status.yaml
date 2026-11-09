@@ -24,7 +24,7 @@ sprints:
 
 development_status:
   epic-1: done
-  epic-2: in-progress
+  epic-2: done
 
   story-1-1-skeleton-search: done
   story-1-2-detail-copy: done
@@ -32,8 +32,8 @@ development_status:
   story-1-4-polish-responsive: done
 
   story-2-1-template-module: done
-  story-2-2-drawer-form-copy: ready-for-dev
-  story-2-3-style-mobile-docs: backlog
+  story-2-2-drawer-form-copy: done
+  story-2-3-style-mobile-docs: done
 
   epic-1-retrospective: optional
   epic-2-retrospective: optional
