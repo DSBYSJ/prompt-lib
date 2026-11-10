@@ -20,6 +20,13 @@ sprints:
     goal: 从"复制模板"进化到"填几个空、复制成品"，不破坏原用法
     branch: feature/fill-variables
     base: main
+    status: done
+
+  - id: sprint-3
+    epic: 3 · 内容扩充与数据质量
+    goal: 内容增到 36 条，并加一道拦住数据错误的测试
+    branch: feature/content-expansion
+    base: main
     status: in-progress
 
 development_status:
@@ -35,8 +42,11 @@ development_status:
   story-2-2-drawer-form-copy: done
   story-2-3-style-mobile-docs: done
 
+  story-3-1-content-and-guard: ready-for-dev
+
   epic-1-retrospective: optional
   epic-2-retrospective: optional
+  epic-3-retrospective: optional
 
 notes: |
   Epic 1：每个 story 完成后改状态，与该 story 的代码同一次提交。
